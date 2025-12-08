@@ -5,11 +5,11 @@ on:
     types: [published]
 
 jobs:
-  build-apk:
+  eas-build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node
@@ -28,13 +28,15 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas whoami
 
-      - name: Build Android APK
+      - name: Build Android APK using EAS Cloud
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas build --platform android --profile preview --non-interactive --local
+        run: eas build --platform android --profile preview --non-interactive
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload APK to Release
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: android-apk
-          path: build-*.apk
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./build/**/*.apk
+          tag: ${{ github.ref }}
+          overwrite: true
