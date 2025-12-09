@@ -17,33 +17,35 @@ jobs:
         with:
           node-version: 18.20.8
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
+      - name: Install dependencies and tools
+        run: |
+          npm install
+          npm install -g eas-cli jq # Install EAS CLI and jq (JSON processor)
 
       - name: Authenticate with EAS
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas whoami
 
-      - name: Build Android APK using EAS Cloud
+      - name: Build Android APK using EAS Cloud and capture metadata
+        id: eas_build
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        # Triggers the remote build on Expo's servers
-        run: eas build --platform android --profile preview --non-interactive
+        run: eas build --platform android --profile preview --non-interactive --json > build_output.json
 
-      - name: Download EAS Artifact
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas build:download --platform android build.apk
+      - name: Download EAS Artifact via URL
+        run: |
+          # Use 'jq' to extract the 'buildUrl' (the public download link) from the JSON file
+          ARTIFACT_URL=$(jq -r '.[0].artifacts.buildUrl' build_output.json)
+
+          # Use curl to download the APK directly from the URL
+          echo "Downloading artifact from: $ARTIFACT_URL"
+          curl -L -o build.apk "$ARTIFACT_URL"
 
       - name: Upload APK to Release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-
           file: ./build.apk
           tag: ${{ github.ref }}
           overwrite: true
