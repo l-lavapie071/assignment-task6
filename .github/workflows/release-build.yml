@@ -19,8 +19,13 @@ jobs:
 
       - name: Install dependencies and tools
         run: |
+          # Install the standard jq command-line utility via apt-get
+          sudo apt-get update
+          sudo apt-get install -y jq 
+
+          # Install Node dependencies and EAS CLI
           npm install
-          npm install -g eas-cli jq # Install EAS CLI and jq (JSON processor)
+          npm install -g eas-cli
 
       - name: Authenticate with EAS
         env:
@@ -35,7 +40,7 @@ jobs:
 
       - name: Download EAS Artifact via URL
         run: |
-          # Use 'jq' to extract the 'buildUrl' (the public download link) from the JSON file
+          # Use 'jq' (the native binary) to extract the 'buildUrl'
           ARTIFACT_URL=$(jq -r '.[0].artifacts.buildUrl' build_output.json)
 
           # Use curl to download the APK directly from the URL
