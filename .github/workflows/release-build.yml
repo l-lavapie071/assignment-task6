@@ -31,12 +31,21 @@ jobs:
       - name: Build Android APK using EAS Cloud
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        # This triggers the remote build on Expo's servers
         run: eas build --platform android --profile preview --non-interactive
+
+      #  Download the APK from EAS Cloud
+      - name: Download EAS Artifact
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+        run: eas build:download --platform android --latest --output build.apk
 
       - name: Upload APK to Release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./build/**/*.apk
+
+          file: ./build.apk
           tag: ${{ github.ref }}
           overwrite: true
